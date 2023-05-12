@@ -45,13 +45,14 @@ def straightDnC(A, B):
 # Function to multiply two matrices using divide and conquer algorithm on parallel
 def straightDnCParallel(A, B, procnum, return_dict):
     size = len(A)
+    split_index = size // 2
  
     c = [[0 for x in range(size)] for y in range(size)]
     if (size == 1):
         c[0][0] = A[0][0] * B[0][0]
- 
+    elif (size < 64):
+        c = straightDnC(A, B)
     else:
-        split_index = size // 2
  
         c00 = [[0 for x in range(split_index)] for y in range(split_index)]
         c01 = [[0 for x in range(split_index)] for y in range(split_index)]
@@ -165,66 +166,99 @@ def strassenParallel(x, y, procnum, return_dict):
     if len(x) == 1:
         return_dict[procnum] = x * y
         return
+    elif len(x) < 64:
+        c = strassen(x, y)
+    else:
+        # Splitting the matrices into quadrants. This will be done recursively
+        # until the base case is reached.
+        a, b, c, d = split(x)
+        e, f, g, h = split(y)
  
-    # Splitting the matrices into quadrants. This will be done recursively
-    # until the base case is reached.
-    a, b, c, d = split(x)
-    e, f, g, h = split(y)
+        manager = multiprocessing.Manager()
+        inner_return_dict = manager.dict()
+        jobs = []
+
+        # Computing the 7 products, recursively (p1, p2...p7)
+        p1 = multiprocessing.Process(target=strassenParallel, args=(a       , f - h , 1, inner_return_dict))
+        p2 = multiprocessing.Process(target=strassenParallel, args=(a + b   , h     , 2, inner_return_dict))
+        p3 = multiprocessing.Process(target=strassenParallel, args=(c + d   , e     , 3, inner_return_dict))
+        p4 = multiprocessing.Process(target=strassenParallel, args=(d       , g - e , 4, inner_return_dict))
+        p5 = multiprocessing.Process(target=strassenParallel, args=(a + d   , e + h , 5, inner_return_dict))
+        p6 = multiprocessing.Process(target=strassenParallel, args=(b - d   , g + h , 6, inner_return_dict))
+        p7 = multiprocessing.Process(target=strassenParallel, args=(a - c   , e + f , 7, inner_return_dict))
+
+        jobs.append(p1)
+        jobs.append(p2)
+        jobs.append(p3)
+        jobs.append(p4)
+        jobs.append(p5)
+        jobs.append(p6)
+        jobs.append(p7)
+
+        for proc in jobs:
+            proc.start()
+
+        for proc in jobs:
+            proc.join()
  
-    manager = multiprocessing.Manager()
-    inner_return_dict = manager.dict()
-    jobs = []
-
-    # Computing the 7 products, recursively (p1, p2...p7)
-    p1 = multiprocessing.Process(target=strassenParallel, args=(a       , f - h , 1, inner_return_dict))
-    p2 = multiprocessing.Process(target=strassenParallel, args=(a + b   , h     , 2, inner_return_dict))
-    p3 = multiprocessing.Process(target=strassenParallel, args=(c + d   , e     , 3, inner_return_dict))
-    p4 = multiprocessing.Process(target=strassenParallel, args=(d       , g - e , 4, inner_return_dict))
-    p5 = multiprocessing.Process(target=strassenParallel, args=(a + d   , e + h , 5, inner_return_dict))
-    p6 = multiprocessing.Process(target=strassenParallel, args=(b - d   , g + h , 6, inner_return_dict))
-    p7 = multiprocessing.Process(target=strassenParallel, args=(a - c   , e + f , 7, inner_return_dict))
-
-    jobs.append(p1)
-    jobs.append(p2)
-    jobs.append(p3)
-    jobs.append(p4)
-    jobs.append(p5)
-    jobs.append(p6)
-    jobs.append(p7)
-
-    for proc in jobs:
-        proc.start()
-
-    for proc in jobs:
-        proc.join()
+        # Computing the values of the 4 quadrants of the final matrix c
+        c11 = inner_return_dict[5] + inner_return_dict[4] - inner_return_dict[2] + inner_return_dict[6] 
+        c12 = inner_return_dict[1] + inner_return_dict[2]          
+        c21 = inner_return_dict[3] + inner_return_dict[4]           
+        c22 = inner_return_dict[1] + inner_return_dict[5] - inner_return_dict[3] - inner_return_dict[7] 
  
-    # Computing the values of the 4 quadrants of the final matrix c
-    c11 = inner_return_dict[5] + inner_return_dict[4] - inner_return_dict[2] + inner_return_dict[6] 
-    c12 = inner_return_dict[1] + inner_return_dict[2]          
-    c21 = inner_return_dict[3] + inner_return_dict[4]           
-    c22 = inner_return_dict[1] + inner_return_dict[5] - inner_return_dict[3] - inner_return_dict[7] 
- 
-    # Combining the 4 quadrants into a single matrix by stacking horizontally and vertically.
-    c = np.vstack((np.hstack((c11, c12)), np.hstack((c21, c22))))
+        # Combining the 4 quadrants into a single matrix by stacking horizontally and vertically.
+        c = np.vstack((np.hstack((c11, c12)), np.hstack((c21, c22))))
  
     return_dict[procnum] = c
 
 
 from matrix import read_2_matrix
+from matrix import next_path, write_result
+import time
 
 if __name__ == "__main__":
 
-    A, B = read_2_matrix("input1_4.txt")
-
-    print(straightDnC(A,B))
-    print(strassen(A,B))
-
+    # for an input
+    i = 1
     manager = multiprocessing.Manager()
     return_dict = manager.dict()
-    # straightDnCParallel(A,B, 0, return_dict)
-    # print(return_dict[0])
 
-    strassenParallel(A,B, 0, return_dict)
-    print(return_dict[0])
+    while True:
+        if i == 8:
+            break
+        try:
+            A, B = read_2_matrix("input" + str(i) + ".txt")
+        except:
+            print("Done " + str(i))
+            break
 
-    # print(strassen(A,B))
+        start = time.time()
+        C = straightDnC(A,B)
+        end = time.time()
+        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        write_result("input" + str(i), "StraightDivAndConq", len(C), C, end - start)
+
+
+        start = time.time()
+        straightDnCParallel(A, B, 0, return_dict)
+        end = time.time()
+        C = return_dict[0]
+        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        write_result("input" + str(i), "StraightDivAndConqP", len(C), C, end - start)
+
+        start = time.time()
+        C = strassen(A,B)
+        end = time.time()
+        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        write_result("input" + str(i), "StrassenDivAndConq", len(C), C, end - start)
+        
+        start = time.time()
+        strassenParallel(A, B, 0, return_dict)
+        end = time.time()
+        C = return_dict[0]
+        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        write_result("input" + str(i), "StrassenDivAndConqP", len(C), C, end - start)
+        
+        i += 1
+

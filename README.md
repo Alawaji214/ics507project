@@ -1,7 +1,7 @@
 # ics507project
 
 - [x] Q1
-- [ ] Q2
+- [x] Q2
 - [ ] Q3
 
 

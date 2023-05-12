@@ -2,6 +2,9 @@
 import numpy as np
 import math
 import os
+import time
+
+matrices_size = [2**i for i in range(1,11)]
 
 def next_path(path_pattern):
     """
@@ -62,29 +65,38 @@ def write_2_matrix(filename, size, a, b):
     f.write(" ".join(map(str, b.flatten())) + "\n")
     # increment to the latest file
 
-def write_result(filename, size, method, time):
-    
-    
+dir_name = "result/"
+def write_result(filename, method, size, matrix, elapsed_time):
+    # construct name of file 
+    output_filename = dir_name + filename + "_" + str(size) +  "_output_" + method + ".txt"
+    info_filename = dir_name + filename + "_" + str(size) +  "_info_" + method + ".txt"
+
+    # print the resulting matrix 
+    output = open(output_filename, "a")
+    output.write(" ".join((str(x) for x in matrix)))
+
+
+    # print the time taken to get the result 
+    info = open(info_filename, "a")
+    info.write(time.strftime("%H:%M:%S", time.gmtime(elapsed_time)) + "\n")
+
     pass
 
 if __name__ == "__main__":
-    size = 4
-    mat = create_matrix(size)
-    print(mat)
-    mat2 = create_matrix(size)
-    print(mat2)
 
-    write_2_matrix(next_path("output-%s.txt"), size, mat, mat2)
-
-    # a,b = read_2_matrix("input1_4.txt")
-    # print(a)
-    # print(b)
-
-
+    for i,size in enumerate(matrices_size):
+        mat1 = create_matrix(size)
+        mat2 = create_matrix(size)
+        write_2_matrix(next_path("input%s.txt"), size, mat1, mat2)
 
 '''
-Final result files
+StraightDivAndConq
+StraightDivAndConqP
+StrassenDivAndConq
+StrassenDivAndConqP
 
+
+Final result files:
 input1_128_output_StraightDivAndConq.txt
 input1_128_output_StraightDivAndConqP.txt
 input1_128_output_StrassenDivAndConq.txt
