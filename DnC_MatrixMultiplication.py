@@ -306,26 +306,26 @@ if __name__ == "__main__":
     manager = multiprocessing.Manager()
     return_dict = manager.dict()
 
-    while i < 9:
+    while True:
         try:
             A, B = read_2_matrix("input" + str(i) + ".txt")
         except:
             print("Done " + str(i))
             break
 
-        # start = time.time()
-        # C = straightDnC(A,B)
-        # end = time.time()
-        # print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
-        # write_result("input" + str(i), "StraightDivAndConq", len(C), C, end - start)
+        start = time.time()
+        C = straightDnC(A,B)
+        end = time.time()
+        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        write_result("input" + str(i), "StraightDivAndConq", len(C), C, end - start)
 
 
-        # start = time.time()
-        # straightDnCParallel(A, B, 0, return_dict)
-        # end = time.time()
-        # C = return_dict[0]
-        # print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
-        # write_result("input" + str(i), "StraightDivAndConqP", len(C), C, end - start)
+        start = time.time()
+        straightDnCParallel(A, B, 0, return_dict)
+        end = time.time()
+        C = return_dict[0]
+        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        write_result("input" + str(i), "StraightDivAndConqP", len(C), C, end - start)
 
         start = time.time()
         C = straightDnCParallelThread(A, B)
@@ -333,25 +333,24 @@ if __name__ == "__main__":
         print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         write_result("input" + str(i), "StraightDivAndConqP", len(C), C, end - start)
 
-        # start = time.time()
-        # C = strassen(A,B)
-        # end = time.time()
-        # print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
-        # write_result("input" + str(i), "StrassenDivAndConq", len(C), C, end - start)
+        start = time.time()
+        C = strassen(A,B)
+        end = time.time()
+        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        write_result("input" + str(i), "StrassenDivAndConq", len(C), C, end - start)
         
-        # start = time.time()
-        # strassenParallel(A, B, 0, return_dict)
-        # end = time.time()
-        # C = return_dict[0]
-        # print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
-        # write_result("input" + str(i), "StrassenDivAndConqP", len(C), C, end - start)
+        start = time.time()
+        strassenParallel(A, B, 0, return_dict)
+        end = time.time()
+        C = return_dict[0]
+        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        write_result("input" + str(i), "StrassenDivAndConqP", len(C), C, end - start)
 
         start = time.time()
         C = strassenParallelThread(A, B)
         end = time.time()
         print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         write_result("input" + str(i), "StrassenDivAndConqP", len(C), C, end - start)
-
 
         i += 1
 
