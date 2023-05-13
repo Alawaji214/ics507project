@@ -6,6 +6,7 @@ import time
 
 matrices_size = [2**i for i in range(1,11)]
 
+# helper function to return the next path e.g. file-1.txt, file-2.txt, file-3.txt
 def next_path(path_pattern):
     """
     Finds the next free path in an sequentially named list of files
@@ -39,6 +40,7 @@ input files
 '''
 
 '''  n upto 2**14'''
+# create a random matrix of size n*n
 def create_matrix(n):
     assert n <= 2**14
     assert math.ceil(math.log(n,2)) == math.floor(math.log(n,2)) # n is power of 2
@@ -47,6 +49,7 @@ def create_matrix(n):
     return np.random.randint(0, 10, size=(size, size))
 
 ''' long integer '''
+# read the input file and return two matrices
 def read_2_matrix(filename):
     filecontent    = np.fromfile(filename, dtype=int, sep=" ")
 
@@ -58,6 +61,7 @@ def read_2_matrix(filename):
     
     return (a,b)
 
+# to write the generated matrices to a file (input)
 def write_2_matrix(filename, size, a, b):
     f = open(filename, "a")
     f.write(str(size) + "\n")
@@ -65,6 +69,8 @@ def write_2_matrix(filename, size, a, b):
     f.write(" ".join(map(str, b.flatten())) + "\n")
     # increment to the latest file
 
+# to write the result to a file
+# e.g. write_2_matrix(next_path("input%s.txt"), 128, create_matrix(128), create_matrix(128))
 dir_name = "result/"
 def write_result(filename, method, size, matrix, elapsed_time):
     # construct name of file 
@@ -83,31 +89,12 @@ def write_result(filename, method, size, matrix, elapsed_time):
     pass
 
 if __name__ == "__main__":
-
+    # create input files as in matrices_size
     for i,size in enumerate(matrices_size):
         mat1 = create_matrix(size)
         mat2 = create_matrix(size)
         write_2_matrix(next_path("input%s.txt"), size, mat1, mat2)
 
-'''
-StraightDivAndConq
-StraightDivAndConqP
-StrassenDivAndConq
-StrassenDivAndConqP
-
-
-Final result files:
-input1_128_output_StraightDivAndConq.txt
-input1_128_output_StraightDivAndConqP.txt
-input1_128_output_StrassenDivAndConq.txt
-input1_128_output_StrassenDivAndConqP.txt
-
-hh:mm:ss
-input1_128_info_StraightDivAndConq.txt
-input1_128_info_StraightDivAndConqP.txt
-input1_128_info_StrassenDivAndConq.txt
-input1_128_info_StrassenDivAndConqP.txt
-'''
 
 
 

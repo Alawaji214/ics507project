@@ -13,6 +13,7 @@ def add_matrix(matrix_A, matrix_B, matrix_C, split_index):
 def straightDnC(A, B):
     size = len(A)
  
+    # create a matrix to store the result
     c = [[0 for x in range(size)] for y in range(size)]
     if (size == 1):
         c[0][0] = A[0][0] * B[0][0]
@@ -42,7 +43,7 @@ def straightDnC(A, B):
  
     return c
 
-# Function to multiply two matrices using divide and conquer algorithm on parallel
+# Function to multiply two matrices using divide and conquer algorithm on parallel using Processes
 def straightDnCParallel(A, B, procnum, return_dict):
     size = len(A)
     split_index = size // 2
@@ -105,6 +106,49 @@ def straightDnCParallel(A, B, procnum, return_dict):
  
     return_dict[procnum] = c
 
+from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
+
+# Function to multiply two matrices using divide and conquer algorithm on parallel using Threads
+def straightDnCParallelThread(A, B):
+    size = len(A)
+ 
+    # c = [[0 for x in range(size)] for y in range(size)]
+    if (size == 1):
+        c =  A[0][0] * B[0][0]
+    elif (size < 64):
+        c = straightDnC(A, B)
+    else:
+        split_index = size // 2
+ 
+        c00 = [[0 for x in range(split_index)] for y in range(split_index)]
+        c01 = [[0 for x in range(split_index)] for y in range(split_index)]
+        c10 = [[0 for x in range(split_index)] for y in range(split_index)]
+        c11 = [[0 for x in range(split_index)] for y in range(split_index)]
+
+        a00, a01, a10, a11 = split(A)
+        b00, b01, b10, b11 = split(B)
+
+        with ThreadPoolExecutor(max_workers=32) as executor:
+
+            p1 = executor.submit(straightDnCParallelThread, a00, b00)
+            p2 = executor.submit(straightDnCParallelThread, a01, b10)
+            p3 = executor.submit(straightDnCParallelThread, a00, b01)
+            p4 = executor.submit(straightDnCParallelThread, a01, b11)
+            p5 = executor.submit(straightDnCParallelThread, a10, b00)
+            p6 = executor.submit(straightDnCParallelThread, a11, b10)
+            p7 = executor.submit(straightDnCParallelThread, a10, b01)
+            p8 = executor.submit(straightDnCParallelThread, a11, b11)
+                    
+            add_matrix(p1.result(), p2.result(), c00, split_index)
+            add_matrix(p3.result(), p4.result(), c01, split_index)
+            add_matrix(p5.result(), p6.result(), c10, split_index)
+            add_matrix(p7.result(), p8.result(), c11, split_index)
+
+            c = np.vstack((np.hstack((c00, c01)), np.hstack((c10, c11))))
+
+    return c
+
 #Function to split a matrix into quarters.
 def split(matrix):
     """
@@ -166,7 +210,7 @@ def strassenParallel(x, y, procnum, return_dict):
     if len(x) == 1:
         return_dict[procnum] = x * y
         return
-    elif len(x) < 64:
+    elif len(x) <= 64:
         c = strassen(x, y)
     else:
         # Splitting the matrices into quadrants. This will be done recursively
@@ -212,6 +256,44 @@ def strassenParallel(x, y, procnum, return_dict):
  
     return_dict[procnum] = c
 
+# function to multiply 2 matrices recursively using strassen algorithm on parallel
+def strassenParallelThread(x, y):
+    """
+    Computes matrix product by divide and conquer approach, recursively.
+    Input: nxn matrices x and y
+    Output: nxn matrix, product of x and y
+    """
+
+    # Base case when size of matrices is 1x1
+    if len(x) == 1:
+        return  x * y
+    elif len(x) < 64:
+        return strassen(x, y)
+    else:
+        # Splitting the matrices into quadrants. This will be done recursively
+        # until the base case is reached.
+        a, b, c, d = split(x)
+        e, f, g, h = split(y)
+ 
+        with ThreadPoolExecutor(max_workers=36) as executor:
+
+            # Computing the 7 products, recursively (p1, p2...p7)
+            p1 = executor.submit(strassenParallelThread, a       , f - h)
+            p2 = executor.submit(strassenParallelThread, a + b   , h    )
+            p3 = executor.submit(strassenParallelThread, c + d   , e    )
+            p4 = executor.submit(strassenParallelThread, d       , g - e)
+            p5 = executor.submit(strassenParallelThread, a + d   , e + h)
+            p6 = executor.submit(strassenParallelThread, b - d   , g + h)
+            p7 = executor.submit(strassenParallelThread, a - c   , e + f)
+ 
+            # Computing the values of the 4 quadrants of the final matrix c
+            c11 = p5.result() + p4.result() - p2.result() + p6.result() 
+            c12 = p1.result() + p2.result()          
+            c21 = p3.result() + p4.result()           
+            c22 = p1.result() + p5.result() - p3.result() - p7.result() 
+ 
+            # Combining the 4 quadrants into a single matrix by stacking horizontally and vertically.
+            return np.vstack((np.hstack((c11, c12)), np.hstack((c21, c22))))
 
 from matrix import read_2_matrix
 from matrix import next_path, write_result
@@ -224,41 +306,52 @@ if __name__ == "__main__":
     manager = multiprocessing.Manager()
     return_dict = manager.dict()
 
-    while True:
-        if i == 8:
-            break
+    while i < 9:
         try:
             A, B = read_2_matrix("input" + str(i) + ".txt")
         except:
             print("Done " + str(i))
             break
 
-        start = time.time()
-        C = straightDnC(A,B)
-        end = time.time()
-        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
-        write_result("input" + str(i), "StraightDivAndConq", len(C), C, end - start)
+        # start = time.time()
+        # C = straightDnC(A,B)
+        # end = time.time()
+        # print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        # write_result("input" + str(i), "StraightDivAndConq", len(C), C, end - start)
 
 
+        # start = time.time()
+        # straightDnCParallel(A, B, 0, return_dict)
+        # end = time.time()
+        # C = return_dict[0]
+        # print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        # write_result("input" + str(i), "StraightDivAndConqP", len(C), C, end - start)
+
         start = time.time()
-        straightDnCParallel(A, B, 0, return_dict)
+        C = straightDnCParallelThread(A, B)
         end = time.time()
-        C = return_dict[0]
         print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         write_result("input" + str(i), "StraightDivAndConqP", len(C), C, end - start)
 
-        start = time.time()
-        C = strassen(A,B)
-        end = time.time()
-        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
-        write_result("input" + str(i), "StrassenDivAndConq", len(C), C, end - start)
+        # start = time.time()
+        # C = strassen(A,B)
+        # end = time.time()
+        # print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        # write_result("input" + str(i), "StrassenDivAndConq", len(C), C, end - start)
         
+        # start = time.time()
+        # strassenParallel(A, B, 0, return_dict)
+        # end = time.time()
+        # C = return_dict[0]
+        # print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        # write_result("input" + str(i), "StrassenDivAndConqP", len(C), C, end - start)
+
         start = time.time()
-        strassenParallel(A, B, 0, return_dict)
+        C = strassenParallelThread(A, B)
         end = time.time()
-        C = return_dict[0]
         print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         write_result("input" + str(i), "StrassenDivAndConqP", len(C), C, end - start)
-        
+
+
         i += 1
 
