@@ -17,7 +17,11 @@ def straightDnC(A, B):
     c = [[0 for x in range(size)] for y in range(size)]
     if (size == 1):
         c[0][0] = A[0][0] * B[0][0]
- 
+    elif (size == 2):
+        c[0][0] = A[0][0] * B[0][0] +  A[0][1] * B[1][0]
+        c[0][1] = A[0][0] * B[0][1] +  A[0][1] * B[1][1] 
+        c[1][0] = A[1][0] * B[0][0] +  A[1][1] * B[1][0] 
+        c[1][1] = A[1][0] * B[0][1] +  A[1][1] * B[1][1]
     else:
         split_index = size // 2
  
@@ -51,6 +55,11 @@ def straightDnCParallel(A, B, procnum, return_dict):
     c = [[0 for x in range(size)] for y in range(size)]
     if (size == 1):
         c[0][0] = A[0][0] * B[0][0]
+    elif (size == 2):
+        c[0][0] = A[0][0] * B[0][0] +  A[0][1] * B[1][0]
+        c[0][1] = A[0][0] * B[0][1] +  A[0][1] * B[1][1] 
+        c[1][0] = A[1][0] * B[0][0] +  A[1][1] * B[1][0] 
+        c[1][1] = A[1][0] * B[0][1] +  A[1][1] * B[1][1]
     elif (size < 64):
         c = straightDnC(A, B)
     else:
@@ -113,9 +122,14 @@ from concurrent.futures import ThreadPoolExecutor
 def straightDnCParallelThread(A, B):
     size = len(A)
  
-    # c = [[0 for x in range(size)] for y in range(size)]
+    c = [[0 for x in range(size)] for y in range(size)]
     if (size == 1):
-        c =  A[0][0] * B[0][0]
+        c[0][0] =  A[0][0] * B[0][0]
+    elif (size == 2):
+        c[0][0] = A[0][0] * B[0][0] +  A[0][1] * B[1][0]
+        c[0][1] = A[0][0] * B[0][1] +  A[0][1] * B[1][1] 
+        c[1][0] = A[1][0] * B[0][0] +  A[1][1] * B[1][0] 
+        c[1][1] = A[1][0] * B[0][1] +  A[1][1] * B[1][1]
     elif (size < 64):
         c = straightDnC(A, B)
     else:
