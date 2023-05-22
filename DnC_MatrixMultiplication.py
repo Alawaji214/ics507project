@@ -171,7 +171,25 @@ def strassen(x, y):
     # Base case when size of matrices is 1x1
     if len(x) == 1:
         return x * y
- 
+    if len(x) == 2:
+        # Computing the 7 products, immidately
+        M1 = (x[0][0] + x[1][1]) * (y[0][0] + y[1][1])
+        M2 = (x[1][0] + x[1][1]) * y[0][0]
+        M3 = x[0][0] *( y[0][1] - y[1][1]) 
+        M4 = x[1][1] *( y[1][0] - y[0][0])
+        M5 = (x[0][0] + x[0][1]) * y[1][1]
+        M6 = (x[1][0] - x[0][0]) *( y[0][0] +y[0][1] )
+        M7 =  (x[0][1] - x[1][1]) *( y[1][0] +y[1][1] )
+    
+        # Computing the values of the 4 quadrants of the final inner matrix c
+        c11 = M1 + M4 - M5 + M7
+        c12 = M3 + M5
+        c21 = M2 + M4
+        c22 = M1 - M2 + M3 + M6
+
+        # Combining the 4 quadrants into a single matrix by stacking horizontally and vertically.
+        c = np.vstack((np.hstack((c11, c12)), np.hstack((c21, c22))))
+        return c
     # Splitting the matrices into quadrants. This will be done recursively
     # until the base case is reached.
     a, b, c, d = split(x)
@@ -316,7 +334,7 @@ if __name__ == "__main__":
         start = time.time()
         C = straightDnC(A,B)
         end = time.time()
-        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        print('straightDnC:                 Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         write_result("input" + str(i), "StraightDivAndConq", len(C), C, end - start)
 
 
@@ -324,32 +342,32 @@ if __name__ == "__main__":
         straightDnCParallel(A, B, 0, return_dict)
         end = time.time()
         C = return_dict[0]
-        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        print('straightDnCParallel:         Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         write_result("input" + str(i), "StraightDivAndConqP", len(C), C, end - start)
 
         start = time.time()
         C = straightDnCParallelThread(A, B)
         end = time.time()
-        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        print('straightDnCParallelThread:   Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         write_result("input" + str(i), "StraightDivAndConqP", len(C), C, end - start)
 
         start = time.time()
         C = strassen(A,B)
         end = time.time()
-        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        print('strassen:                    Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         write_result("input" + str(i), "StrassenDivAndConq", len(C), C, end - start)
         
         start = time.time()
         strassenParallel(A, B, 0, return_dict)
         end = time.time()
         C = return_dict[0]
-        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        print('strassenParallel:            Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         write_result("input" + str(i), "StrassenDivAndConqP", len(C), C, end - start)
 
         start = time.time()
         C = strassenParallelThread(A, B)
         end = time.time()
-        print('Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        print('strassenParallelThread:      Execution time:', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         write_result("input" + str(i), "StrassenDivAndConqP", len(C), C, end - start)
 
         i += 1
